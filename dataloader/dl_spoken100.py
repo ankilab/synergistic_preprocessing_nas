@@ -13,14 +13,16 @@ class Spoken100DataLoader(Dataset):
         self.path = path
         self.languages = ["english", "german", "french", "mandarin"]
         self.metadata = self._get_df_metadata()
-        self.speakers = self.metadata["speaker"].unique()  # we have 32 speaker in total. We will use 28 for training and 4 for validation
+        self.speakers = self.metadata["speaker"].unique()  # we have 32 speaker in total. We will use 28 for training, 2 for validation and 2 for testing
 
         if subset == "training":
             self.metadata = self.metadata[self.metadata["speaker"].isin(self.speakers[:28])]
         elif subset == "validation":
-            self.metadata = self.metadata[self.metadata["speaker"].isin(self.speakers[28:])]
+            self.metadata = self.metadata[self.metadata["speaker"].isin(self.speakers[28:30])]
+        elif subset == "testing":
+            self.metadata = self.metadata[self.metadata["speaker"].isin(self.speakers[30:])]
         else:
-            raise ValueError("subset should be either 'training' or 'validation'")
+            raise ValueError("subset should be either 'training', 'validation' or 'testing'")
         
     def __len__(self):
         return len(self.metadata)

@@ -1,9 +1,23 @@
 data/ESC-50-master/*
+data/VocalSound/*
+data/LibriSpeech/*
 data/SpeechCommands/*
 data/SpokeN-100/*
 *.vscode/*
 results/
 *tar.gz
+best_models/
+
+data/prepare_esc_50_dataset.py
+data/prepare_libri_speech_dataset.py
+
+*esc50*
+*libri_speech*
+
+notebooks/*
+
+train_best_models.ipynb
+main.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -19,7 +19,7 @@ class Experiment2SearchSpace(ModelSpace):
         candidate_sampling_rates = [sr for sr in candidate_sampling_rates if sr <= orig_sr]
 
         # Experiment Nr. 2 optimizes the provided preprocessing parameters
-        self.add_mutable(nni.choice('method', ["mel", "mfcc", "wavelet"]))
+        self.add_mutable(nni.choice('method', ["mel","mfcc", "wavelet"]))
         self.add_mutable(nni.choice('sample_rate', candidate_sampling_rates))
         self.add_mutable(nni.choice('use_db', [False, True]))
 

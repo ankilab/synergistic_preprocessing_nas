@@ -14,8 +14,10 @@ import os
 import json
 
 from dataloader.dl_speech_commands import SubsetSC
-from dataloader.dl_esc50 import ESC50DataLoader
+# from dataloader.dl_esc50 import ESC50DataLoader
 from dataloader.dl_spoken100 import Spoken100DataLoader
+#from dataloader.dl_libri_speech import LibriSpeechDataLoader
+from dataloader.dl_vocal_sound import VocalSoundDataLoader
 
 from search_spaces.exp1_search_space import Experiment1SearchSpace
 from search_spaces.exp2_search_space import Experiment2SearchSpace
@@ -26,8 +28,10 @@ from torchvision.models import mobilenet_v3_small, mobilenet_v3_large
 
 from helper.get_pre_processing_transform import get_pre_processing_transform
 from data.prepare_speech_commands import prepare_speech_commands  
-from data.prepare_esc_50_dataset import prepare_esc50_dataset
+# from data.prepare_esc_50_dataset import prepare_esc50_dataset
 from data.prepare_spoken100_dataset import prepare_spoken100_dataset
+# from data.prepare_libri_speech_dataset import prepare_libri_speech
+from data.prepare_vocal_sound_dataset import prepare_vocal_sound_dataset
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -78,18 +82,30 @@ def evaluate_model(model):
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
         N_EPOCHS = 10
-    elif args.dataset == 'esc50':
-        train_dataset = ESC50DataLoader("data/ESC-50-master/audio", subset='training', transform=preprocess_transform)
-        val_dataset = ESC50DataLoader("data/ESC-50-master/audio", subset='validation', transform=preprocess_transform)
-        optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
-        N_EPOCHS = 100
+    # elif args.dataset == 'esc50':
+    #     train_dataset = ESC50DataLoader("data/ESC-50-master/audio", subset='training', transform=preprocess_transform)
+    #     val_dataset = ESC50DataLoader("data/ESC-50-master/audio", subset='validation', transform=preprocess_transform)
+    #     optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+    #     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    #     N_EPOCHS = 100
     elif args.dataset == 'spoken100':
         train_dataset = Spoken100DataLoader("data/SpokeN-100/", subset='training', transform=preprocess_transform)
         val_dataset = Spoken100DataLoader("data/SpokeN-100/", subset='validation', transform=preprocess_transform)
-        optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
         N_EPOCHS = 100
+    # elif args.dataset == 'libri_speech':
+    #     train_dataset = LibriSpeechDataLoader("data/LibriSpeech/data_windowed_2s_1s/", subset='training', transform=preprocess_transform)
+    #     val_dataset = LibriSpeechDataLoader("data/LibriSpeech/data_windowed_2s_1s/", subset='validation', transform=preprocess_transform)
+    #     optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+    #     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    #     N_EPOCHS = 30
+    elif args.dataset == 'vocal_sound':
+        train_dataset = VocalSoundDataLoader("data/VocalSound", subset='training', transform=preprocess_transform)
+        val_dataset = VocalSoundDataLoader("data/VocalSound", subset='validation', transform=preprocess_transform)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+        N_EPOCHS = 20
     else:
         raise ValueError(f'Dataset {args.dataset} not supported')
 
@@ -108,8 +124,8 @@ def evaluate_model(model):
                 json.dump(class_weights, f)
             class_weights = torch.FloatTensor(class_weights).to(device)
 
-    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=2)
-    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=2)
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, num_workers=1)
+    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=1)
 
     print("Loading data")
     if args.dataloader == 'complete':
@@ -202,11 +218,11 @@ def evaluate_model(model):
 
     # save final result
     with open(val_accs_dir, 'a') as f:
-        f.write(f'{model_idx},{accuracy}\n')
+        f.write(f'{model_idx},{best_accuracy}\n')
     
     model_idx += 1
 
-    nni.report_final_result(accuracy)
+    nni.report_final_result(best_accuracy)
 
     torch.cuda.empty_cache()
 
@@ -214,7 +230,7 @@ def evaluate_model(model):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment', type=int, default=1)
-    parser.add_argument('--dataset', type=str, default="speech_commands", choices=['speech_commands', 'esc50', 'spoken100'])
+    parser.add_argument('--dataset', type=str, default="speech_commands", choices=['speech_commands', 'spoken100', 'vocal_sound'])
     parser.add_argument('--dataloader', type=str, default="complete", choices=['complete', 'batch'])
     parser.add_argument('--model' , type=str, default='mobilenetv3-small', choices=['mobilenetv3-small', 'mobilenetv3-large', 'mobilenetv2']) # only relevant for experiment 2
     parser.add_argument('--max_trial_number', type=int, default=1000)
@@ -230,19 +246,31 @@ if __name__ == '__main__':
         num_labels = 12
         orig_sr = 16000
         sample_length = 1 # seconds
-    elif args.dataset == 'esc50':
-        if not os.path.exists("data/ESC-50-master/"):
-            # Class was not created yet, prepare the dataset here now
-            prepare_esc50_dataset()
+    # elif args.dataset == 'esc50':
+    #     if not os.path.exists("data/ESC-50-master/"):
+    #         # Class was not created yet, prepare the dataset here now
+    #         prepare_esc50_dataset()
         num_labels = 50
         orig_sr = 44100
-        sample_length = 5
+        sample_length = 5 # seconds
     elif args.dataset == 'spoken100':
         if not os.path.exists("data/SpokeN-100/"):
             prepare_spoken100_dataset()
         num_labels = 100
         orig_sr = 44100
-        sample_length = 2
+        sample_length = 2 # seconds
+    # elif args.dataset == 'libri_speech':
+    #     if not os.path.exists("data/LibriSpeech/"):
+    #         prepare_libri_speech()
+    #     num_labels = 28
+    #     orig_sr = 16000 
+    #     sample_length = 2 # seconds
+    elif args.dataset == 'vocal_sound':
+        if not os.path.exists("data/VocalSound/"):
+            prepare_vocal_sound_dataset()
+        num_labels = 6
+        orig_sr = 16000
+        sample_length = 5 # seconds
     else:
         raise ValueError(f'Dataset {args.dataset} not supported')
 
