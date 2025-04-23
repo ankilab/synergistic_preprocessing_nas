@@ -1,6 +1,6 @@
-# ICASSP 2025 Submission: Synergistic audio pre-processing and neural architecture design maximizes performance
+# Synergistic audio pre-processing and neural architecture design maximizes performance
 
-This repository contains the code for the paper titled "Synergistic audio pre-processing and neural architecture design maximizes performance," which was submitted to ICASSP 2025.
+This repository contains the code for the paper titled "Synergistic audio pre-processing and neural architecture design maximizes performance".
 
 ![alt text](overview.png)
 
@@ -30,7 +30,7 @@ To reproduce our results, you can execute the following steps:
 To run the OptModel experiment, use the following command:
 
 ```bash
-python run_experiment.py --experiment 1 --dataset [speech_commands, esc50, spoken100]
+python run_experiment.py --experiment 1 --dataset [speech_commands, vocal_sound, spoken100]
 ```
 
 ### OptPre
@@ -38,7 +38,7 @@ python run_experiment.py --experiment 1 --dataset [speech_commands, esc50, spoke
 To run the OptPre experiment, use the following command:
 
 ```bash
-python run_experiment.py --experiment 2 --dataset [speech_commands, esc50, spoken100] --model [mobilenetv2, mobilenetv3small, mobilenetv3large]
+python run_experiment.py --experiment 2 --dataset [speech_commands, vocal_sound, spoken100] --model [mobilenetv2, mobilenetv3small, mobilenetv3large]
 ```
 
 ### OptBoth
@@ -46,6 +46,6 @@ python run_experiment.py --experiment 2 --dataset [speech_commands, esc50, spoke
 To run the OptBoth experiment, use the following command:
 
 ```bash
-python run_experiment.py --experiment 3 --dataset [speech_commands, esc50, spoken100]
+python run_experiment.py --experiment 3 --dataset [speech_commands, vocal_sound, spoken100]
 ```
 
